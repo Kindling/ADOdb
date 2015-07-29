@@ -1105,19 +1105,30 @@ class ADODB_Active_Record {
 
 };
 
-function adodb_GetActiveRecordsClass(&$db, $class, $table,$whereOrderBy,$bindarr, $primkeyArr,
-			$extra)
+/*
+ * @author ?
+ * @author Ivete Tecedor <ivete.tecedor@kindlingapp.com>
+ * @since ?
+ * @version 3.36
+ * @param $isRawSql, true if $whereOrderBy is a full sql statement
+ */
+function adodb_GetActiveRecordsClass(&$db, $class, $table,$whereOrderBy,$bindarr, $primkeyArr, $extra, $isRawSql = false)
 {
 global $_ADODB_ACTIVE_DBS;
-
-
-	$save = $db->SetFetchMode(ADODB_FETCH_NUM);
-	$qry = "select * from ".$table;
-
-	if (!empty($whereOrderBy)) {
-		$qry .= ' WHERE '.$whereOrderBy;
+	error_log($whereOrderBy);
+	$save = $db->SetFetchMode(isset($extra['fetchMode']) ? $extra['fetchMode'] : ADODB_FETCH_NUM);
+	if ($isRawSql) {
+		$qry = '';
+	} else {
+		$qry = "select * from ".$table;
 	}
-	if(isset($extra['limit'])) {
+	if (!empty($whereOrderBy) && !$isRawSql) {
+		$qry .= ' WHERE '.$whereOrderBy;
+	} else {
+		$qry .= $whereOrderBy;
+	}
+	if(isset($extra['limit']))
+	{
 		$rows = false;
 		if(isset($extra['offset'])) {
 			$rs = $db->SelectLimit($qry, $extra['limit'], $extra['offset'],$bindarr);
@@ -1132,16 +1143,11 @@ global $_ADODB_ACTIVE_DBS;
 		}
 	} else
 		$rows = $db->GetAll($qry,$bindarr);
-
 	$db->SetFetchMode($save);
-
 	$false = false;
-
 	if ($rows === false) {
 		return $false;
 	}
-
-
 	if (!class_exists($class)) {
 		$db->outp_throw("Unknown class $class in GetActiveRecordsClass()",'GetActiveRecordsClass');
 		return $false;
@@ -1154,7 +1160,6 @@ global $_ADODB_ACTIVE_DBS;
 	$arrRef = array();
 	$bTos = array(); // Will store belongTo's indices if any
 	foreach($rows as $row) {
-
 		$obj = new $class($table,$primkeyArr,$db);
 		if ($obj->ErrorNo()){
 			$db->_errorMsg = $obj->ErrorMsg();
@@ -1163,6 +1168,5 @@ global $_ADODB_ACTIVE_DBS;
 		$obj->Set($row);
 		$arr[] = $obj;
 	} // foreach($rows as $row)
-
 	return $arr;
 }
