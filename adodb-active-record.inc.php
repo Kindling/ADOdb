@@ -1115,7 +1115,6 @@ class ADODB_Active_Record {
 function adodb_GetActiveRecordsClass(&$db, $class, $table,$whereOrderBy,$bindarr, $primkeyArr, $extra, $isRawSql = false)
 {
 global $_ADODB_ACTIVE_DBS;
-	error_log($whereOrderBy);
 	$save = $db->SetFetchMode(isset($extra['fetchMode']) ? $extra['fetchMode'] : ADODB_FETCH_NUM);
 	if ($isRawSql) {
 		$qry = '';
