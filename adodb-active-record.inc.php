@@ -655,6 +655,17 @@ class ADODB_Active_Record {
 		$this->_saved = true;
 
 		$table = $this->TableInfo();
+
+		// @author Patrick Force <patrickf@kindlingapp.com>
+		// adding this to support setting custom properties that aren't actually fields via set
+		foreach ($row as $key => $value) {
+			$keyCased = FirePit_Utils::underscoreSeparatedToLowerCamelCase($key);
+			if (!array_key_exists($key, $table->flds) && property_exists($this, $keyCased)) {
+				$this->$keyCased = $value;
+				unset($row[$key]);
+			}
+		}
+
 		if ($ACTIVE_RECORD_SAFETY && sizeof($table->flds) != sizeof($row)) {
 			# <AP>
 			$bad_size = TRUE;
@@ -919,6 +930,23 @@ class ADODB_Active_Record {
 			return false;
 		}
 		$arr = $db->GetActiveRecordsClass(get_class($this),$this->_table, $whereOrderBy,$bindarr,$pkeysArr,$extra);
+		return $arr;
+	}
+
+	/*
+	 * allows more complex sql queries than just "select * from $tablename"
+	 *
+	 * TODO: Implemented this to minimize the scope of upgrading adodb. Figure out whether we really need it and if not, remove.
+	 *
+	 * @author  Ivete Tecedor <ivete.tecedor@kindlingapp.com>
+	 * @since   3.36
+	 * @version 3.36
+	 * @return  returns an array of active record objects
+	 */
+	function FindRaw($whereOrderBy,$bindarr=false,$pkeysArr=false,$extra=array())
+	{
+		$db = $this->DB(); if (!$db || empty($this->_table)) return false;
+		$arr = $db->GetActiveRecordsClass(get_class($this),$this->_table, $whereOrderBy,$bindarr,$pkeysArr,$extra, true);
 		return $arr;
 	}
 
